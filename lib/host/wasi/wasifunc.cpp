@@ -28,7 +28,7 @@
 
 #ifndef __APPLE__
 #include <sys/epoll.h>
-#if __GLIBC_PREREQ(2, 8)
+#if __GLIBC_PREREQ && __GLIBC_PREREQ(2, 8)
 #include <sys/timerfd.h>
 #endif
 #endif
@@ -325,7 +325,7 @@ timestamp2Timespec(__wasi_timestamp_t Timestamp) noexcept {
   return Result;
 }
 
-#if !__GLIBC_PREREQ(2, 6)
+#if !__GLIBC_PREREQ || !__GLIBC_PREREQ(2, 6)
 static constexpr timeval
 timestamp2Timeval(__wasi_timestamp_t Timestamp) noexcept {
   using namespace std::chrono;
@@ -878,7 +878,7 @@ WasiFdFilestatSetTimes::body(Runtime::Instance::MemoryInstance *MemInst,
     return __WASI_ERRNO_NOTCAPABLE;
   }
 
-#if __GLIBC_PREREQ(2, 6)
+#if __GLIBC_PREREQ && __GLIBC_PREREQ(2, 6)
   timespec SysTimespec[2];
   if (FstFlags & __WASI_FSTFLAGS_ATIM) {
     SysTimespec[0] = timestamp2Timespec(ATim);
@@ -1011,7 +1011,7 @@ Expect<uint32_t> WasiFdPread::body(Runtime::Instance::MemoryInstance *MemInst,
     SysIOVS[I].iov_len = IOVS.buf_len;
   }
 
-#if __GLIBC_PREREQ(2, 10)
+#if __GLIBC_PREREQ && __GLIBC_PREREQ(2, 10)
   /// Store read bytes length.
   *NRead = preadv(Entry->second.HostFd, SysIOVS, IOVSLen, Offset);
 #else
@@ -1156,7 +1156,7 @@ Expect<uint32_t> WasiFdPwrite::body(Runtime::Instance::MemoryInstance *MemInst,
     SysIOVS[I].iov_len = IOVS.buf_len;
   }
 
-#if __GLIBC_PREREQ(2, 10)
+#if __GLIBC_PREREQ && __GLIBC_PREREQ(2, 10)
   *NWritten = pwritev(Entry->second.HostFd, SysIOVS, IOVSLen, Offset);
 #else
   const off_t ErrOffset = -1;
@@ -1649,7 +1649,7 @@ WasiPathFilestatSetTimes::body(Runtime::Instance::MemoryInstance *MemInst,
   }
   std::string PathStr(Path, PathLen);
 
-#if __GLIBC_PREREQ(2, 6)
+#if __GLIBC_PREREQ && __GLIBC_PREREQ(2, 6)
   int SysFlags = 0;
   if ((Flags & __WASI_LOOKUPFLAGS_SYMLINK_FOLLOW) == 0) {
     SysFlags |= AT_SYMLINK_FOLLOW;
@@ -2090,7 +2090,7 @@ WasiPollOneoff::body(Runtime::Instance::MemoryInstance *MemInst, uint32_t InPtr,
       }
       Timer(const Timer &) noexcept = delete;
       Timer(Timer &&) noexcept = default;
-#if __GLIBC_PREREQ(2, 8)
+#if __GLIBC_PREREQ && __GLIBC_PREREQ(2, 8)
       bool create(clockid_t ClockId, __wasi_subclockflags_t Flags,
                   __wasi_timestamp_t Timeout) noexcept {
         TimerFd = timerfd_create(ClockId, TFD_NONBLOCK | TFD_CLOEXEC);
@@ -2173,7 +2173,7 @@ WasiPollOneoff::body(Runtime::Instance::MemoryInstance *MemInst, uint32_t InPtr,
       if (EPollFd >= 0) {
         return true;
       }
-#if __GLIBC_PREREQ(2, 9)
+#if __GLIBC_PREREQ && __GLIBC_PREREQ(2, 9)
       EPollFd = epoll_create1(EPOLL_CLOEXEC);
       return likely(EPollFd >= 0);
 #else
@@ -2227,7 +2227,7 @@ WasiPollOneoff::body(Runtime::Instance::MemoryInstance *MemInst, uint32_t InPtr,
       sigdelset(&Mask, SIGTERM);
       sigdelset(&Mask, SIGRTMIN);
       signal(SIGTERM, &sigtermHandler);
-#if __GLIBC_PREREQ(2, 6)
+#if __GLIBC_PREREQ && __GLIBC_PREREQ(2, 6)
       const int Count =
           epoll_pwait(EPollFd, Events.data(), Events.size(), -1, &Mask);
 #else
